@@ -1,0 +1,19 @@
+# id	label	profiles	method	description	detection	source
+starship	Starship	all	cargo	Fast, customizable cross-shell prompt (works especially well with Fish)	cmd:starship	https://github.com/starship/starship
+lazygit	Lazygit	all	go	Terminal interface for Git	cmd:lazygit	https://github.com/jesseduffield/lazygit
+superfile	Superfile	all	go	Modern terminal file manager	cmd:spf,superfile	https://github.com/yorukot/superfile
+matcha	Matcha	desktop	go	Modern terminal email client	cmd:matcha	https://github.com/floatpane/matcha
+concord	Concord	desktop	cargo	Terminal Discord client	cmd:concord	https://github.com/chojs23/concord
+browsh	Browsh	all	release	Modern text-based browser powered by Firefox	cmd:browsh	https://github.com/browsh-org/browsh
+spotify-player	Spotify Player	desktop	cargo	Terminal Spotify client; requires Spotify Premium	cmd:spotify_player,spotify-player	https://github.com/aome510/spotify-player
+fnf	fnf	all	git-make	Fast terminal file navigator	cmd:fnf	https://github.com/leo-arch/fnf
+caligula	Caligula	all	cargo	Friendly terminal disk-image writer	cmd:caligula	https://github.com/ifd3f/caligula
+fetch	fetch	all	git-make	Animated 3D system-information display	cmd:fetch	https://github.com/areofyl/fetch
+catnap	Catnap	all	nimble	Fast, customizable system-information display written in Nim	cmd:catnap	https://github.com/iinsertNameHere/catnap
+fastfetch	Fastfetch	all	package	Fast system-information display from the distro repository	cmd:fastfetch	https://github.com/fastfetch-cli/fastfetch
+neofetch	Neofetch (legacy)	all	git-copy	Archived system-information tool; install only for compatibility or preference	cmd:neofetch	https://github.com/dylanaraps/neofetch
+nerd-font-jetbrains-mono	JetBrainsMono Nerd Font	all	nerdfont	Developer font patched with prompt and terminal icons	font:JetBrainsMono	https://github.com/ryanoasis/nerd-fonts
+nerd-font-fira-code	FiraCode Nerd Font	all	nerdfont	Monospaced programming font with ligatures and terminal icons	font:FiraCode	https://github.com/ryanoasis/nerd-fonts
+nerd-font-hack	Hack Nerd Font	all	nerdfont	Highly readable terminal font patched with icons	font:Hack	https://github.com/ryanoasis/nerd-fonts
+nerd-font-meslo	Meslo Nerd Font	all	nerdfont	Terminal font commonly used by prompt themes	font:Meslo	https://github.com/ryanoasis/nerd-fonts
+nerd-font-caskaydia-cove	CaskaydiaCove Nerd Font	all	nerdfont	Cascadia Code variant patched with terminal icons	font:CaskaydiaCove	https://github.com/ryanoasis/nerd-fonts

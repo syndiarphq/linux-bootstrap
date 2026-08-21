@@ -1,0 +1,17 @@
+fish
+fastfetch
+kitty
+cava
+cmatrix
+cowsay
+duf
+glances
+gum
+fzf
+jp2a
+lynx
+micro
+pv
+starship
+superfile
+thefuck

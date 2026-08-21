@@ -1,0 +1,139 @@
+apt-transport-https	Compatibility package for HTTPS APT repositories
+ark	KDE archive manager for compressed files
+base-devel	Arch toolchain for building software and packages
+cameractrls	Control webcam settings through a graphical interface
+cava	Terminal audio spectrum visualizer
+btop	Modern interactive CPU, memory, disk, and process monitor
+build-essential	Debian compiler, linker, and build-tool essentials
+ca-certificates	Trusted certificate authorities for secure HTTPS connections
+curl	Transfer data to and from URLs and APIs
+ctags	Index functions, classes, and symbols for fast code navigation
+cmatrix	Animated Matrix-style terminal display
+code	Visual Studio Code-compatible graphical editor
+cowsay	Display messages through configurable ASCII characters
+fastfetch	Fast system-information summary for the terminal
+fonts-dejavu	Debian DejaVu font family
+fonts-liberation	Debian metric-compatible Liberation fonts
+fonts-noto	Debian Noto fonts with broad language coverage
+fonts-noto-color-emoji	Debian color emoji fonts
+fd	Fast, user-friendly alternative to the find command
+fd-find	Debian package for the fd file-search utility
+duf	Readable terminal overview of filesystem usage
+easyeffects	PipeWire audio effects and processing interface
+ethtool	Inspect and configure Ethernet devices
+fish	Friendly interactive command-line shell
+flatpak	Distribution-independent desktop application manager
+firefox	Mozilla web browser
+foliate	Graphical ebook reader
+fsarchiver	Create compressed filesystem archives for recovery
+gamemode	Temporarily optimize system performance for games
+git	Distributed version-control system
+github-cli	Use GitHub repositories, issues, and pull requests from the terminal
+glances	Cross-platform terminal system monitor
+gnome-disk-utility	Inspect, format, and benchmark storage devices
+gh	Fedora GitHub command-line client
+gnupg	Encrypt, sign, and verify files and repository metadata
+htop	Interactive process viewer and system monitor
+gum	Create polished interactive prompts in shell scripts
+gwenview	KDE image viewer
+haruna	KDE media player
+hdparm	Inspect and tune SATA disk parameters
+hwinfo	Detailed hardware detection and reporting
+inetutils	Common network clients and diagnostic utilities
+iotop	Display disk input/output usage by process
+jq	Query and transform JSON data from the command line
+jp2a	Render JPEG images as terminal ASCII art
+kate	KDE advanced text editor
+kcalc	KDE desktop calculator
+kitty	GPU-accelerated terminal emulator
+lm-sensors	Debian hardware temperature and voltage monitoring tools
+lm_sensors	Arch hardware temperature and voltage monitoring tools
+lsscsi	List SCSI and storage devices
+lynx	Keyboard-driven text web browser
+man-pages	Linux system-call and command documentation
+marknote	KDE Markdown note-taking application
+meld	Graphical file and directory comparison tool
+mission-center	Graphical system resource monitor
+ShellCheck	RPM package for static shell-script analysis
+dejavu-fonts	openSUSE DejaVu font family
+dejavu-sans-fonts	Fedora DejaVu Sans font family
+gcc	GNU C compiler
+gcc-c++	GNU C++ compiler
+google-noto-emoji-color-fonts	Fedora Noto color emoji fonts
+google-noto-sans-fonts	Fedora Noto Sans font family
+lsb-release	Report Linux distribution identification information
+liberation-fonts	Metric-compatible Liberation font family
+mangohud	Performance overlay for Vulkan and OpenGL applications
+make	Build automation utility
+ncdu	Interactive terminal disk-usage analyzer
+nfs-utils	Client and server utilities for Network File System shares
+ntp	Network Time Protocol synchronization tools
+needrestart	Report services that need restarting after upgrades
+nodejs	JavaScript runtime for command-line and server applications
+noto-fonts	Broad Unicode font family with extensive language coverage
+noto-fonts-emoji	Color emoji fonts from the Noto family
+obs-studio	Video recording and live-streaming studio
+openrgb	Control supported RGB lighting hardware
+noto-coloremoji-fonts	openSUSE Noto color emoji fonts
+noto-sans-fonts	openSUSE Noto Sans font family
+npm	Package manager for Node.js projects
+openssh	Secure Shell client and server utilities
+openssh-server	Secure Shell server package
+pipx	Install Python command-line applications in isolated environments
+pavucontrol	Graphical PulseAudio and PipeWire volume control
+piper	Configure supported gaming and productivity mice
+pv	Display progress and throughput through a data pipeline
+python	Python language runtime on Arch
+python-pip	Python package installer on Arch
+python3	Python 3 language runtime on Debian
+python3-pip	Python 3 package installer
+python3-venv	Create isolated Python environments on Debian
+ripgrep	Extremely fast recursive text-search utility
+rsync	Efficient local and remote file synchronization
+shellcheck	Static analysis and diagnostics for shell scripts
+sensors	openSUSE hardware sensor monitoring utilities
+steam	Valve game store, launcher, and runtime
+starship	Fast cross-shell prompt with contextual information
+superfile	Modern terminal file manager
+spectacle	KDE screenshot and annotation utility
+sudo	Run approved commands with elevated privileges
+sysstat	Historical CPU, disk, and system performance statistics
+tmux	Persistent terminal sessions and split panes
+tree	Display directory contents as an indented tree
+ttf-dejavu	General-purpose DejaVu TrueType fonts
+ttf-liberation	Metric-compatible alternatives to common Microsoft fonts
+thefuck	Suggest corrected commands after a typing mistake
+unzip	Extract ZIP archives
+universal-ctags	Index functions, classes, and symbols for fast code navigation
+wget	Non-interactive network file downloader
+warpinator	Transfer files between computers on a local network
+zip	Create and manage ZIP archives
+bind	DNS server and diagnostic tools such as dig
+ddrescue	Recover readable data from failing storage media
+filezilla	Graphical FTP, FTPS, and SFTP client
+fzf	Fast fuzzy finder used for searching and opening project files
+flatseal	Inspect and manage Flatpak application permissions
+gimp	Advanced raster image editor
+gparted	Graphical disk partition editor
+iperf3	Measure network throughput between systems
+keepassxc	Offline password and secrets manager
+krita	Digital painting and illustration application
+libreoffice-fresh	Current LibreOffice productivity suite
+mpv	Minimal, scriptable video and audio player
+mtr	Continuous network route and packet-loss diagnostic tool
+micro	Friendly non-modal terminal editor with familiar desktop-style shortcuts
+nftables	Linux firewall framework and command-line utility
+nmap	Network discovery and port-scanning utility
+nvme-cli	Inspect health and manage NVMe storage devices
+qbittorrent	Graphical BitTorrent client
+rclone	Synchronize files with cloud and remote storage providers
+remmina	Remote desktop client for RDP, VNC, and SSH
+restic	Encrypted, deduplicated backup application
+smartmontools	Monitor drive health using SMART diagnostics
+sshguard	Block hosts that repeatedly fail remote login attempts
+syncthing	Peer-to-peer file synchronization between trusted devices
+tcpdump	Capture and inspect network packets
+testdisk	Recover lost partitions and damaged filesystem metadata
+thunderbird	Email, calendar, contacts, and feed client
+virt-manager	Graphical manager for KVM and libvirt virtual machines
+vlc	Full-featured video and audio player

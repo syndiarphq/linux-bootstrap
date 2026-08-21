@@ -1,0 +1,12 @@
+ca-certificates
+curl
+wget
+git
+jq
+ripgrep
+fd-find
+rsync
+unzip
+zip
+tmux
+tree

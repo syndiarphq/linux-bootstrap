@@ -1,0 +1,4 @@
+ttf-dejavu
+ttf-liberation
+noto-fonts
+noto-fonts-emoji

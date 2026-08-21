@@ -1,0 +1,6 @@
+mtr
+nmap
+tcpdump
+iperf3
+bind
+nftables

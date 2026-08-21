@@ -1,0 +1,8 @@
+base-devel
+ctags
+github-cli
+python
+nodejs
+npm
+code
+meld

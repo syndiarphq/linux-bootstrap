@@ -1,0 +1,2 @@
+# Retained for compatibility. Packages are now split between terminal.txt and
+# graphical.txt so the full-screen installer can present focused categories.

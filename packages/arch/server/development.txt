@@ -1,0 +1,6 @@
+base-devel
+ctags
+github-cli
+python
+python-pip
+shellcheck

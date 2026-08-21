@@ -1,0 +1,5 @@
+btop
+iotop
+ncdu
+sysstat
+sensors

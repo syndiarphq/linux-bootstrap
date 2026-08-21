@@ -1,0 +1,5 @@
+htop
+iotop
+ncdu
+sysstat
+lm-sensors

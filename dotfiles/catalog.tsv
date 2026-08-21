@@ -1,0 +1,22 @@
+# id	repository_path	target	mode	scope	risk	description
+fish-config	config/fish/config.fish	$CONFIG/fish/config.fish	symlink	all	portable	Fish interactive configuration
+fish-functions	config/fish/functions	$CONFIG/fish/functions	symlink	all	portable	Fish user functions
+starship	config/starship.toml	$CONFIG/starship.toml	symlink	all	portable	Starship prompt configuration
+kitty	config/kitty	$CONFIG/kitty	symlink	desktop	portable	Kitty terminal configuration
+fastfetch	config/fastfetch	$CONFIG/fastfetch	symlink	all	portable	Fastfetch configuration
+micro-settings	config/micro/settings.json	$CONFIG/micro/settings.json	symlink	all	portable	Micro editor preferences and language-server settings
+micro-bindings	config/micro/bindings.json	$CONFIG/micro/bindings.json	symlink	all	portable	Micro non-modal keyboard shortcuts
+micro-colorschemes	config/micro/colorschemes	$CONFIG/micro/colorschemes	symlink	all	portable	Micro custom color schemes
+lazygit	config/lazygit/config.yml	$CONFIG/lazygit/config.yml	watched-copy	all	portable	Lazygit preferences
+superfile	config/superfile	$CONFIG/superfile	symlink	all	portable	Superfile configuration and themes
+niri-config	config/niri/config.kdl	$CONFIG/niri/config.kdl	watched-copy	niri	review	Niri compositor configuration
+niri-dms	config/niri/dms	$CONFIG/niri/dms	watched-copy	niri	review	DMS-generated Niri fragments
+niri-outputs	hosts/$HOST/niri/outputs.kdl	$CONFIG/niri/dms/outputs.kdl	per-host	niri	machine	Niri monitor layout and scaling
+dms-settings	config/DankMaterialShell/settings.json	$CONFIG/DankMaterialShell/settings.json	watched-copy	niri	review	DMS preferences; review location and wallpaper paths
+kde-globals	config/kde/kdeglobals	$CONFIG/kdeglobals	watched-copy	kde	review	KDE global appearance and behavior
+kde-shortcuts	config/kde/kglobalshortcutsrc	$CONFIG/kglobalshortcutsrc	watched-copy	kde	review	KDE global keyboard shortcuts
+kde-kwin	config/kde/kwinrc	$CONFIG/kwinrc	watched-copy	kde	review	KWin behavior
+kde-dolphin	config/kde/dolphinrc	$CONFIG/dolphinrc	watched-copy	kde	review	Dolphin preferences
+kde-spectacle	config/kde/spectaclerc	$CONFIG/spectaclerc	watched-copy	kde	review	Spectacle preferences
+kde-plasma-layout	hosts/$HOST/kde/plasma-org.kde.plasma.desktop-appletsrc	$CONFIG/plasma-org.kde.plasma.desktop-appletsrc	per-host	kde	machine	Plasma panels and widgets
+kde-displays	hosts/$HOST/kde/kwinoutputconfig.json	$CONFIG/kwinoutputconfig.json	per-host	kde	machine	KDE output layout and scaling

@@ -1,0 +1,7 @@
+build-essential
+git
+python3
+python3-venv
+pipx
+shellcheck
+universal-ctags

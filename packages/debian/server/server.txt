@@ -1,0 +1,5 @@
+needrestart
+apt-transport-https
+gnupg
+lsb-release
+fish

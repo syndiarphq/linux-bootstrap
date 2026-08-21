@@ -1,0 +1,4 @@
+smartmontools
+nvme-cli
+testdisk
+ddrescue

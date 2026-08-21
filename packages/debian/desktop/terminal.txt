@@ -1,0 +1,5 @@
+fish
+fastfetch
+fzf
+kitty
+micro
