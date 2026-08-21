@@ -12,7 +12,9 @@ export GOMODCACHE="$TEST_ROOT/go-mod"
 export GOPATH="$TEST_ROOT/go-path"
 (cd "$ROOT_DIR/tui" && go test -buildvcs=false ./...)
 
-[[ "$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")" == "1.0.0" ]]
+[[ "$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")" == "1.0.1" ]]
+grep -Fq 'readonly BOOTSTRAP_VERSION="1.0.1"' "$ROOT_DIR/bootstrap.sh"
+grep -Fq 'sha256sum --check' "$ROOT_DIR/bootstrap.sh"
 
 PLAN_TEST="$TEST_ROOT/server.plan"
 TEST_FAMILY="$(ROOT_DIR="$ROOT_DIR" bash -c 'source "$ROOT_DIR/lib/detect.sh"; detect_platform; printf %s "$DISTRO_FAMILY"')"

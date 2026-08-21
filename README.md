@@ -1,6 +1,6 @@
 # Linux Bootstrap
 
-Current release: **v1.0.0**
+Current release: **v1.0.1**
 
 An interactive, repeatable Linux bootstrap with desktop and headless-server
 profiles for conventional package-manager families:
@@ -19,6 +19,20 @@ The full-screen installer opens with a centered, Vim-inspired welcome screen;
 Enter begins preflight and Esc exits without making changes.
 
 ## Run it
+
+For a temporary, verified run without cloning the repository:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/syndiarphq/linux-bootstrap/main/bootstrap.sh)
+```
+
+This downloads the v1.0.1 release and its SHA-256 file, verifies the archive,
+runs the normal interactive installer, and removes the temporary files when it
+finishes. The bootstrapper never invokes `sudo`; privilege handling remains in
+the reviewed installer. Process substitution keeps input connected to the
+terminal, unlike `curl | bash`.
+
+To keep an editable checkout instead:
 
 ```bash
 git clone https://github.com/syndiarphq/linux-bootstrap.git
