@@ -15,6 +15,7 @@ export GOPATH="$TEST_ROOT/go-path"
 [[ "$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")" == "1.1.2" ]]
 grep -Fq 'readonly BOOTSTRAP_VERSION="1.1.2"' "$ROOT_DIR/bootstrap.sh"
 grep -Fq 'sha256sum --check' "$ROOT_DIR/bootstrap.sh"
+grep -Fq 'releases/latest/download/bootstrap.sh' "$ROOT_DIR/README.md"
 grep -Fq 'linux-bootstrap-tui-${TUI_ARCH}' "$ROOT_DIR/setup.sh"
 grep -Fq 'Use --no-fullscreen to continue without it.' "$ROOT_DIR/setup.sh"
 grep -Fq 'The full TUI requires an interactive terminal.' "$ROOT_DIR/setup.sh"

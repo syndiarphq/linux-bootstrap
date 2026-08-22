@@ -13,13 +13,13 @@ machines.
 ## Run it
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/syndiarphq/linux-bootstrap/main/bootstrap.sh)
+bash <(curl -fsSL https://github.com/syndiarphq/linux-bootstrap/releases/latest/download/bootstrap.sh)
 ```
 
 If Fish is already your shell, run the Bash command through Bash:
 
 ```fish
-bash -c 'bash <(curl -fsSL https://raw.githubusercontent.com/syndiarphq/linux-bootstrap/main/bootstrap.sh)'
+bash -c 'bash <(curl -fsSL https://github.com/syndiarphq/linux-bootstrap/releases/latest/download/bootstrap.sh)'
 ```
 
 That downloads the current release, verifies it, and opens the installer. Or

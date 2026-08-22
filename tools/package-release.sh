@@ -28,6 +28,8 @@ chmod +x "$STAGE_DIR/linux-bootstrap/setup.sh" "$STAGE_DIR/linux-bootstrap/bin/"
 rm -f "$OUTPUT_DIR/$ARCHIVE_NAME" "$OUTPUT_DIR/$ARCHIVE_NAME.sha256"
 (cd "$STAGE_DIR" && zip -qr "$OUTPUT_DIR/$ARCHIVE_NAME" linux-bootstrap)
 (cd "$OUTPUT_DIR" && sha256sum "$ARCHIVE_NAME" > "$ARCHIVE_NAME.sha256")
+install -m 0755 "$ROOT_DIR/bootstrap.sh" "$OUTPUT_DIR/bootstrap.sh"
 
 printf 'Created %s\n' "$OUTPUT_DIR/$ARCHIVE_NAME"
 printf 'Created %s\n' "$OUTPUT_DIR/$ARCHIVE_NAME.sha256"
+printf 'Created %s\n' "$OUTPUT_DIR/bootstrap.sh"
