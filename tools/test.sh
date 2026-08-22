@@ -12,8 +12,8 @@ export GOMODCACHE="$TEST_ROOT/go-mod"
 export GOPATH="$TEST_ROOT/go-path"
 (cd "$ROOT_DIR/tui" && go test -buildvcs=false ./...)
 
-[[ "$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")" == "1.0.1" ]]
-grep -Fq 'readonly BOOTSTRAP_VERSION="1.0.1"' "$ROOT_DIR/bootstrap.sh"
+[[ "$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")" == "1.1.0" ]]
+grep -Fq 'readonly BOOTSTRAP_VERSION="1.1.0"' "$ROOT_DIR/bootstrap.sh"
 grep -Fq 'sha256sum --check' "$ROOT_DIR/bootstrap.sh"
 grep -Fq 'linux-bootstrap-tui-${TUI_ARCH}' "$ROOT_DIR/setup.sh"
 grep -Fq 'Use --no-fullscreen to continue without it.' "$ROOT_DIR/setup.sh"

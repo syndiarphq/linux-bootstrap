@@ -26,9 +26,9 @@ func TestSplashChoices(t *testing.T) {
 
 func TestSplashUsesMinimalWelcomeLayout(t *testing.T) {
 	m := newModel("..", "arch", "Arch Linux", filepath.Join(t.TempDir(), "selection"), "server")
-	m.version = "1.0.1"
+	m.version = "1.1.0"
 	view := m.renderSplash(100, 30)
-	for _, want := range []string{"L I N U X", "version 1.0.1", "Begin a new setup", "↑/↓ move"} {
+	for _, want := range []string{"L I N U X", "version 1.1.0", "Begin a new setup", "↑/↓ move"} {
 		if !strings.Contains(view, want) {
 			t.Fatalf("splash is missing %q", want)
 		}
