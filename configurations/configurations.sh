@@ -4,6 +4,11 @@ configuration_catalog_ids() {
   awk -F '\t' '!/^#/ && NF >= 6 {print $1}' "$ROOT_DIR/configurations/catalog.tsv"
 }
 
+configuration_field() {
+  local id="$1" column="$2"
+  awk -F '\t' -v id="$id" -v column="$column" '$1 == id {print $column; exit}' "$ROOT_DIR/configurations/catalog.tsv"
+}
+
 configuration_requirement_available() {
   case "$1" in
     github-cli) command -v gh >/dev/null 2>&1 ;;

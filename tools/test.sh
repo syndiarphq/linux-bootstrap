@@ -12,8 +12,8 @@ export GOMODCACHE="$TEST_ROOT/go-mod"
 export GOPATH="$TEST_ROOT/go-path"
 (cd "$ROOT_DIR/tui" && go test -buildvcs=false ./...)
 
-[[ "$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")" == "1.1.1" ]]
-grep -Fq 'readonly BOOTSTRAP_VERSION="1.1.1"' "$ROOT_DIR/bootstrap.sh"
+[[ "$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")" == "1.1.2" ]]
+grep -Fq 'readonly BOOTSTRAP_VERSION="1.1.2"' "$ROOT_DIR/bootstrap.sh"
 grep -Fq 'sha256sum --check' "$ROOT_DIR/bootstrap.sh"
 grep -Fq 'linux-bootstrap-tui-${TUI_ARCH}' "$ROOT_DIR/setup.sh"
 grep -Fq 'Use --no-fullscreen to continue without it.' "$ROOT_DIR/setup.sh"
@@ -137,6 +137,7 @@ configuration_ids="$(ROOT_DIR="$ROOT_DIR" bash -c 'source "$ROOT_DIR/configurati
 for expected in fish-login-shell fish-starship micro-developer-essentials starship-preset-nerd-font-symbols starship-preset-tokyo-night upstream-github-auth upstream-spotify-auth upstream-tailscale-up; do
   grep -qx "$expected" <<<"$configuration_ids"
 done
+[[ "$(ROOT_DIR="$ROOT_DIR" bash -c 'source "$ROOT_DIR/configurations/configurations.sh"; configuration_field fish-starship 1')" == fish-starship ]]
 
 (
   export HOME="$TEST_ROOT/config-home"

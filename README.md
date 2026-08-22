@@ -1,6 +1,6 @@
 # Linux Bootstrap
 
-Current release: **v1.1.1**
+Current release: **v1.1.2**
 
 This is the setup script I wanted for reinstalling my desktop or bringing up a
 new server without rebuilding everything by hand.
@@ -14,6 +14,12 @@ machines.
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/syndiarphq/linux-bootstrap/main/bootstrap.sh)
+```
+
+If Fish is already your shell, run the Bash command through Bash:
+
+```fish
+bash -c 'bash <(curl -fsSL https://raw.githubusercontent.com/syndiarphq/linux-bootstrap/main/bootstrap.sh)'
 ```
 
 That downloads the current release, verifies it, and opens the installer. Or

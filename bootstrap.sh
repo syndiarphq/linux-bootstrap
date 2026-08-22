@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-readonly BOOTSTRAP_VERSION="1.1.1"
+readonly BOOTSTRAP_VERSION="1.1.2"
 readonly RELEASE_BASE="https://github.com/syndiarphq/linux-bootstrap/releases/download/v${BOOTSTRAP_VERSION}"
 readonly ARCHIVE_NAME="linux-bootstrap-v${BOOTSTRAP_VERSION}.zip"
 
