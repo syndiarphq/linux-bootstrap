@@ -22,12 +22,13 @@ clone it if you want to look around first:
 ```bash
 git clone https://github.com/syndiarphq/linux-bootstrap.git
 cd linux-bootstrap
-./tools/build-tui.sh  # optional; needs Go
+./tools/build-tui.sh  # only needed for a source clone; requires Go 1.25+
 ./setup.sh
 ```
 
-The release already includes the full-screen TUI. A source clone can build it,
-or fall back to Gum/basic prompts if needed.
+The release includes static x86-64 and ARM64 TUI binaries and selects the right
+one automatically. A source clone can build the binary for the current machine
+with the command above. Gum is not needed.
 
 ## What it does
 
@@ -56,9 +57,14 @@ if I ever need it.
 ./setup.sh --configure        # only run application setup
 ./setup.sh --doctor           # check a saved setup
 ./setup.sh --retry-failed     # retry failures from the last real run
-./setup.sh --no-fullscreen    # use normal scrolling output
+./setup.sh --no-fullscreen    # deliberately use normal scrolling output
 ./tools/test.sh               # run project checks
 ```
+
+Normal interactive runs require the full TUI. If its binary is missing,
+unsupported, or cannot start, the installer explains the problem instead of
+quietly changing interfaces. `--no-fullscreen` is still there for unusual
+terminals or when normal scrolling output is preferred.
 
 Logs and reports are kept in `~/.local/state/linux-bootstrap/`.
 

@@ -5,7 +5,6 @@ ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 DRY_RUN=false
 ASSUME_YES=false
 FULLSCREEN=true
-CLASSIC_UI=false
 CONFIGURE_ONLY=false
 DOTFILES_ACTION=""
 DOTFILES_APPLY=false
@@ -20,7 +19,7 @@ while (($#)); do
     --dry-run) DRY_RUN=true ;;
     --yes) ASSUME_YES=true ;;
     --no-fullscreen) FULLSCREEN=false ;;
-    --classic) CLASSIC_UI=true ;;
+    --classic) FULLSCREEN=false ;;
     --configure) CONFIGURE_ONLY=true ;;
     --plan)
       (($# >= 2)) || { printf '%s\n' 'Missing file after --plan.' >&2; exit 2; }
@@ -463,8 +462,17 @@ if [[ -n "$PLAN_FILE" ]]; then
   exit 0
 fi
 
-TUI_BIN="${LINUX_BOOTSTRAP_TUI:-$ROOT_DIR/bin/linux-bootstrap-tui}"
-if [[ "$CLASSIC_UI" == false && "$ASSUME_YES" == false && "$FULLSCREEN" == true && -t 0 && -t 1 && -x "$TUI_BIN" ]]; then
+TUI_ARCH=""
+case "$(uname -m)" in
+  x86_64|amd64) TUI_ARCH=amd64 ;;
+  aarch64|arm64) TUI_ARCH=arm64 ;;
+esac
+TUI_BIN="${LINUX_BOOTSTRAP_TUI:-$ROOT_DIR/bin/linux-bootstrap-tui-${TUI_ARCH}}"
+
+if [[ "$ASSUME_YES" == false && "$FULLSCREEN" == true ]]; then
+  [[ -t 0 && -t 1 ]] || die "The full TUI requires an interactive terminal. Use --no-fullscreen for normal scrolling output."
+  [[ -n "$TUI_ARCH" ]] || die "The full TUI does not currently support architecture: $(uname -m). Use --no-fullscreen to continue without it."
+  [[ -x "$TUI_BIN" ]] || die "The full TUI binary for $TUI_ARCH is missing. Run ./tools/build-tui.sh, or use --no-fullscreen."
   selection_file="$(mktemp "${TMPDIR:-/tmp}/linux-bootstrap-selection.XXXXXX")"
   tui_args=(--root "$ROOT_DIR" --family "$DISTRO_FAMILY" --pretty "$DISTRO_PRETTY" --default-profile "$PROFILE_HINT" --output "$selection_file")
   tui_args+=(--availability "$AVAILABILITY_FILE")
@@ -482,7 +490,7 @@ if [[ "$CLASSIC_UI" == false && "$ASSUME_YES" == false && "$FULLSCREEN" == true 
     tui_status=$?
     rm -f "$selection_file"
     if ((tui_status == 130)); then printf 'Installation cancelled.\n'; exit 0; fi
-    ui_warn "The full TUI could not start; falling back to the classic interface."
+    die "The full TUI exited unexpectedly with status $tui_status. Use --no-fullscreen to continue without it."
   fi
 fi
 

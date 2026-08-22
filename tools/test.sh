@@ -15,6 +15,16 @@ export GOPATH="$TEST_ROOT/go-path"
 [[ "$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")" == "1.0.1" ]]
 grep -Fq 'readonly BOOTSTRAP_VERSION="1.0.1"' "$ROOT_DIR/bootstrap.sh"
 grep -Fq 'sha256sum --check' "$ROOT_DIR/bootstrap.sh"
+grep -Fq 'linux-bootstrap-tui-${TUI_ARCH}' "$ROOT_DIR/setup.sh"
+grep -Fq 'Use --no-fullscreen to continue without it.' "$ROOT_DIR/setup.sh"
+grep -Fq 'The full TUI requires an interactive terminal.' "$ROOT_DIR/setup.sh"
+
+TUI_BUILD_DIR="$TEST_ROOT/tui-build"
+"$ROOT_DIR/tools/build-tui.sh" --all --output-dir "$TUI_BUILD_DIR" >/dev/null
+for architecture in amd64 arm64; do
+  [[ -x "$TUI_BUILD_DIR/linux-bootstrap-tui-$architecture" ]]
+  CGO_ENABLED=0 GOOS=linux GOARCH="$architecture" go version -m "$TUI_BUILD_DIR/linux-bootstrap-tui-$architecture" >/dev/null
+done
 
 PLAN_TEST="$TEST_ROOT/server.plan"
 TEST_FAMILY="$(ROOT_DIR="$ROOT_DIR" bash -c 'source "$ROOT_DIR/lib/detect.sh"; detect_platform; printf %s "$DISTRO_FAMILY"')"
