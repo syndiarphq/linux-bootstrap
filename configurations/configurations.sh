@@ -194,7 +194,7 @@ configure_fish_starship() {
     return 0
   }
   run mkdir -p "$config_dir"
-  run sh -c 'printf "\n# >>> linux-bootstrap starship >>>\nif status is-interactive\n    starship init fish | source\nend\n# <<< linux-bootstrap starship <<<\n" >> "$1"' sh "$config"
+  run sh -c 'printf "\n# >>> linux-bootstrap starship >>>\nfish_add_path --global \"\$HOME/.local/bin\"\nif status is-interactive\n    starship init fish | source\nend\n# <<< linux-bootstrap starship <<<\n" >> "$1"' sh "$config"
 }
 
 configure_starship_preset() {

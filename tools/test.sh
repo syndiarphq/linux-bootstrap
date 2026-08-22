@@ -12,8 +12,8 @@ export GOMODCACHE="$TEST_ROOT/go-mod"
 export GOPATH="$TEST_ROOT/go-path"
 (cd "$ROOT_DIR/tui" && go test -buildvcs=false ./...)
 
-[[ "$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")" == "1.1.2" ]]
-grep -Fq 'readonly BOOTSTRAP_VERSION="1.1.2"' "$ROOT_DIR/bootstrap.sh"
+[[ "$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")" == "1.1.3" ]]
+grep -Fq 'readonly BOOTSTRAP_VERSION="1.1.3"' "$ROOT_DIR/bootstrap.sh"
 grep -Fq 'sha256sum --check' "$ROOT_DIR/bootstrap.sh"
 grep -Fq 'releases/latest/download/bootstrap.sh' "$ROOT_DIR/README.md"
 grep -Fq 'linux-bootstrap-tui-${TUI_ARCH}' "$ROOT_DIR/setup.sh"
@@ -178,6 +178,7 @@ done
   configure_fish_starship
   configure_fish_starship
   [[ "$(grep -Fc '# >>> linux-bootstrap starship >>>' "$XDG_CONFIG_HOME/fish/config.fish")" == 1 ]]
+  grep -Fq 'fish_add_path --global "$HOME/.local/bin"' "$XDG_CONFIG_HOME/fish/config.fish"
   mkdir -p "$XDG_CONFIG_HOME"
   printf 'existing = true\n' > "$XDG_CONFIG_HOME/starship.toml"
   configure_starship_preset nerd-font-symbols
