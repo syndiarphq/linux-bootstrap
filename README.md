@@ -1,6 +1,6 @@
 # Linux Bootstrap
 
-Current release: **v1.1.0**
+Current release: **v1.1.1**
 
 This is the setup script I wanted for reinstalling my desktop or bringing up a
 new server without rebuilding everything by hand.

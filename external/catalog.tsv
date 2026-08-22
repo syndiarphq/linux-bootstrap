@@ -1,7 +1,7 @@
 # id	label	profiles	method	description	detection	source
-starship	Starship	all	cargo	Fast, customizable cross-shell prompt (works especially well with Fish)	cmd:starship	https://github.com/starship/starship
+starship	Starship	all	release	Fast, customizable cross-shell prompt (works especially well with Fish)	cmd:starship	https://github.com/starship/starship
 lazygit	Lazygit	all	go	Terminal interface for Git	cmd:lazygit	https://github.com/jesseduffield/lazygit
-superfile	Superfile	all	go	Modern terminal file manager	cmd:spf,superfile	https://github.com/yorukot/superfile
+superfile	Superfile	all	release	Modern terminal file manager	cmd:spf,superfile	https://github.com/yorukot/superfile
 matcha	Matcha	desktop	go	Modern terminal email client	cmd:matcha	https://github.com/floatpane/matcha
 concord	Concord	desktop	cargo	Terminal Discord client	cmd:concord	https://github.com/chojs23/concord
 browsh	Browsh	all	release	Modern text-based browser powered by Firefox	cmd:browsh	https://github.com/browsh-org/browsh

@@ -68,7 +68,10 @@ external_dependency_packages() {
       go) printf '%s\n' "$go_package" ;;
       git-make) printf '%s\n' git make ;;
       nimble) printf '%s\n' nim ;;
-      release) printf '%s\n' curl jq "$firefox_package" ;;
+      release)
+        printf '%s\n' curl jq tar
+        [[ "$id" == browsh ]] && printf '%s\n' "$firefox_package"
+        ;;
       nerdfont) printf '%s\n' curl unzip ;;
       git-copy) printf '%s\n' git ;;
       package) printf '%s\n' "$id" ;;
@@ -124,6 +127,84 @@ install_go_external() {
   ensure_external_tool go "$go_package"
   ensure_user_bin
   run env GOBIN="$HOME/.local/bin" go install "$module@latest"
+}
+
+external_release_arch() {
+  case "${1:-$(uname -m)}" in
+    x86_64|amd64) printf 'amd64\n' ;;
+    aarch64|arm64) printf 'arm64\n' ;;
+    *) return 1 ;;
+  esac
+}
+
+verified_release_asset() {
+  local repository="$1" asset_name="$2" checksum_name="$3" inner_path="$4" binary_name="$5"
+  local temp_dir api_file tag asset_url checksum_url expected actual extracted
+  ensure_external_tool curl curl
+  ensure_external_tool jq jq
+  ensure_external_tool tar tar
+  ensure_user_bin
+
+  temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/linux-bootstrap-release-asset.XXXXXX")"
+  register_temp_artifact "$temp_dir"
+  api_file="$temp_dir/release.json"
+
+  if [[ "$DRY_RUN" == true ]]; then
+    run curl --fail --location --retry 3 --output "$api_file" "https://api.github.com/repos/$repository/releases/latest"
+    ui_success "Would download and verify $asset_name from $repository."
+    run install -m 0755 "$temp_dir/$inner_path" "$HOME/.local/bin/$binary_name"
+    return 0
+  fi
+
+  run curl --fail --location --retry 3 --output "$api_file" "https://api.github.com/repos/$repository/releases/latest"
+  tag="$(jq -r '.tag_name // empty' "$api_file")"
+  [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([._-][0-9A-Za-z.-]+)?$ ]] || die "Could not identify a stable $repository release."
+  asset_name="${asset_name//\{version\}/${tag#v}}"
+  checksum_name="${checksum_name//\{version\}/${tag#v}}"
+  inner_path="${inner_path//\{version\}/${tag#v}}"
+  asset_url="$(jq -r --arg name "$asset_name" '.assets[] | select(.name == $name) | .browser_download_url' "$api_file" | head -n 1)"
+  checksum_url="$(jq -r --arg name "$checksum_name" '.assets[] | select(.name == $name) | .browser_download_url' "$api_file" | head -n 1)"
+  [[ "$asset_url" == "https://github.com/$repository/releases/download/$tag/$asset_name" ]] || die "Could not identify the official $repository archive."
+  [[ "$checksum_url" == "https://github.com/$repository/releases/download/$tag/$checksum_name" ]] || die "Could not identify the official $repository checksum."
+
+  run curl --fail --location --retry 3 --output "$temp_dir/$asset_name" "$asset_url"
+  run curl --fail --location --retry 3 --output "$temp_dir/$checksum_name" "$checksum_url"
+  if [[ "$checksum_name" == *.sha256 ]]; then
+    expected="$(tr -d '[:space:]' < "$temp_dir/$checksum_name")"
+  else
+    expected="$(awk -v name="$asset_name" '$2 == name {print $1; exit}' "$temp_dir/$checksum_name")"
+  fi
+  [[ "$expected" =~ ^[0-9a-fA-F]{64}$ ]] || die "The $repository release did not contain a usable checksum for $asset_name."
+  actual="$(sha256sum "$temp_dir/$asset_name" | awk '{print $1}')"
+  [[ "$actual" == "$expected" ]] || die "Checksum verification failed for $asset_name."
+  ui_success "Verified $asset_name."
+
+  run mkdir -p "$temp_dir/extracted"
+  run tar -xzf "$temp_dir/$asset_name" --no-same-owner --no-same-permissions -C "$temp_dir/extracted" "$inner_path"
+  extracted="$temp_dir/extracted/$inner_path"
+  [[ -f "$extracted" && ! -L "$extracted" ]] || die "The verified $repository archive did not contain the expected binary."
+  run install -m 0755 "$extracted" "$HOME/.local/bin/$binary_name"
+}
+
+install_starship_release() {
+  command -v starship >/dev/null 2>&1 && { ui_success "starship is already installed."; return; }
+  local arch target
+  arch="$(external_release_arch)" || die "Starship has no configured binary for architecture $(uname -m)."
+  [[ "$arch" == amd64 ]] && target=x86_64 || target=aarch64
+  verified_release_asset starship/starship \
+    "starship-${target}-unknown-linux-musl.tar.gz" \
+    "starship-${target}-unknown-linux-musl.tar.gz.sha256" \
+    starship starship
+}
+
+install_superfile_release() {
+  external_is_installed superfile && { ui_success "superfile is already installed."; return; }
+  local arch
+  arch="$(external_release_arch)" || die "Superfile has no configured binary for architecture $(uname -m)."
+  verified_release_asset yorukot/superfile \
+    "superfile-linux-v{version}-${arch}.tar.gz" \
+    "superfile-v{version}-checksums.txt" \
+    "./dist/superfile-linux-v{version}-${arch}/spf" spf
 }
 
 update_or_clone_external() {
@@ -220,13 +301,13 @@ install_external() {
   case "$id" in
     starship)
       if [[ "$DISTRO_FAMILY" == arch ]]; then install_named_package starship
-      else install_cargo_external starship starship
+      else install_starship_release
       fi
       ;;
     lazygit) install_go_external github.com/jesseduffield/lazygit lazygit ;;
     superfile)
       if [[ "$DISTRO_FAMILY" == arch ]]; then install_named_package superfile
-      else install_go_external github.com/yorukot/superfile/src/cmd/superfile superfile
+      else install_superfile_release
       fi
       ;;
     matcha) install_go_external github.com/floatpane/matcha matcha ;;

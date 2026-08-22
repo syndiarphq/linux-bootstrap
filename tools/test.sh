@@ -12,8 +12,8 @@ export GOMODCACHE="$TEST_ROOT/go-mod"
 export GOPATH="$TEST_ROOT/go-path"
 (cd "$ROOT_DIR/tui" && go test -buildvcs=false ./...)
 
-[[ "$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")" == "1.1.0" ]]
-grep -Fq 'readonly BOOTSTRAP_VERSION="1.1.0"' "$ROOT_DIR/bootstrap.sh"
+[[ "$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")" == "1.1.1" ]]
+grep -Fq 'readonly BOOTSTRAP_VERSION="1.1.1"' "$ROOT_DIR/bootstrap.sh"
 grep -Fq 'sha256sum --check' "$ROOT_DIR/bootstrap.sh"
 grep -Fq 'linux-bootstrap-tui-${TUI_ARCH}' "$ROOT_DIR/setup.sh"
 grep -Fq 'Use --no-fullscreen to continue without it.' "$ROOT_DIR/setup.sh"
@@ -91,6 +91,47 @@ external_source="$(ROOT_DIR="$ROOT_DIR" DISTRO_FAMILY=debian DISTRO_PRETTY=Debia
 [[ "$external_source" == https://github.com/floatpane/matcha ]]
 official_external_source="$(ROOT_DIR="$ROOT_DIR" DISTRO_FAMILY=debian DISTRO_PRETTY=Debian bash -c 'source "$ROOT_DIR/external/installers.sh"; source "$ROOT_DIR/external/status.sh"; external_install_source fastfetch')"
 [[ "$official_external_source" == 'Debian repository' ]]
+release_dependencies="$(ROOT_DIR="$ROOT_DIR" DISTRO_FAMILY=debian bash -c 'source "$ROOT_DIR/external/installers.sh"; external_dependency_packages starship superfile')"
+for expected in curl jq tar; do grep -qx "$expected" <<<"$release_dependencies"; done
+if grep -Eq '^(cargo|golang-go)$' <<<"$release_dependencies"; then
+  printf 'Release-installed tools unexpectedly requested a compiler.\n' >&2
+  exit 1
+fi
+[[ "$(ROOT_DIR="$ROOT_DIR" bash -c 'source "$ROOT_DIR/external/installers.sh"; external_release_arch x86_64')" == amd64 ]]
+[[ "$(ROOT_DIR="$ROOT_DIR" bash -c 'source "$ROOT_DIR/external/installers.sh"; external_release_arch aarch64')" == arm64 ]]
+
+(
+  export ROOT_DIR DISTRO_FAMILY=debian DISTRO_ID=debian DISTRO_PRETTY='Debian GNU/Linux 13 (trixie)' VERSION_CODENAME=trixie
+  export HOME="$TEST_ROOT/tailscale-home" DRY_RUN=false LOG_FILE="$TEST_ROOT/tailscale.log"
+  TEMP_ARTIFACTS=()
+  installed_package=""
+  root_targets=""
+  source "$ROOT_DIR/lib/installers.sh"
+  source "$ROOT_DIR/services/services.sh"
+  ui_success() { :; }
+  ui_warn() { :; }
+  die() { printf '%s\n' "$*" >&2; exit 1; }
+  register_temp_artifact() { TEMP_ARTIFACTS+=("$1"); }
+  install_named_package() { installed_package="$1"; }
+  as_root() { root_targets+=" ${*: -1}"; }
+  run() {
+    local output="" url="${*: -1}"
+    if [[ "$1" == curl ]]; then
+      while (($#)); do
+        [[ "$1" == --output ]] && { output="$2"; break; }
+        shift
+      done
+      mkdir -p "$(dirname "$output")"
+      if [[ "$url" == *.gpg ]]; then printf 'test-key\n' > "$output"
+      else printf 'deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/debian trixie main\n' > "$output"
+      fi
+    fi
+  }
+  install_tailscale_apt
+  [[ "$installed_package" == tailscale ]]
+  [[ "$root_targets" == *'/usr/share/keyrings/tailscale-archive-keyring.gpg'* ]]
+  [[ "$root_targets" == *'/etc/apt/sources.list.d/tailscale.list'* ]]
+)
 
 configuration_ids="$(ROOT_DIR="$ROOT_DIR" bash -c 'source "$ROOT_DIR/configurations/configurations.sh"; configuration_catalog_ids')"
 for expected in fish-login-shell fish-starship micro-developer-essentials starship-preset-nerd-font-symbols starship-preset-tokyo-night upstream-github-auth upstream-spotify-auth upstream-tailscale-up; do
