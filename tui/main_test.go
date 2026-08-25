@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestSplashChoices(t *testing.T) {
@@ -35,6 +36,110 @@ func TestSplashUsesMinimalWelcomeLayout(t *testing.T) {
 	}
 	if strings.Contains(view, "██") || strings.Contains(view, "[ Enter ]") {
 		t.Fatal("splash still contains the old block-art treatment")
+	}
+}
+
+func TestFooterOnlyShowsRelevantActions(t *testing.T) {
+	m := newModel("..", "arch", "Arch Linux", filepath.Join(t.TempDir(), "selection"), "server")
+	m.stage = stageProfile
+	profileHelp := m.renderFooter(100)
+	if !strings.Contains(profileHelp, "Enter select") || strings.Contains(profileHelp, "/ search") {
+		t.Fatal("profile footer contains actions from another screen")
+	}
+	m.stage = stagePackages
+	packageHelp := m.renderFooter(100)
+	if !strings.Contains(packageHelp, "/ search") || !strings.Contains(packageHelp, "Esc categories") {
+		t.Fatal("package footer is missing package actions")
+	}
+}
+
+func TestMainViewUsesJoinedPanels(t *testing.T) {
+	m := newModel("..", "arch", "Arch Linux", filepath.Join(t.TempDir(), "selection"), "server")
+	m.stage = stageProfile
+	m.width, m.height = 100, 30
+	view := m.View()
+	if strings.Contains(view, "│ │") {
+		t.Fatal("main view still leaves a gap between separately boxed panels")
+	}
+}
+
+func TestWideViewAddsDetailsWithoutRepeatingDescription(t *testing.T) {
+	m := newModel("..", "arch", "Arch Linux", filepath.Join(t.TempDir(), "selection"), "server")
+	m.stage = stageProfile
+	m.width, m.height = 140, 36
+	view := m.View()
+	if !strings.Contains(view, "Details") || !strings.Contains(view, "Graphical workstation") {
+		t.Fatal("wide layout did not render contextual details")
+	}
+	if strings.Count(view, "Graphical workstation") != 1 {
+		t.Fatal("wide layout repeated the selected item's description")
+	}
+}
+
+func TestNarrowViewKeepsInlineDescriptions(t *testing.T) {
+	m := newModel("..", "arch", "Arch Linux", filepath.Join(t.TempDir(), "selection"), "server")
+	m.stage = stageProfile
+	m.width, m.height = 90, 30
+	view := m.View()
+	if strings.Contains(view, "Details") || !strings.Contains(view, "Graphical workstation") {
+		t.Fatal("narrow layout did not collapse details into the main list")
+	}
+}
+
+func TestInstallProgressViews(t *testing.T) {
+	m := newModel("..", "arch", "Arch Linux", filepath.Join(t.TempDir(), "selection"), "server")
+	m.stage = stageInstall
+	m.width, m.height = 100, 30
+	m.installLines = []string{"Downloading package metadata", "Installing git"}
+	view := m.View()
+	if !strings.Contains(view, "Installation in progress") || !strings.Contains(view, "Installing git") || !strings.Contains(view, "F2 raw output") {
+		t.Fatal("progress view is missing status information")
+	}
+	m.showRaw = true
+	if !strings.Contains(m.View(), "Downloading package metadata") {
+		t.Fatal("raw progress view does not show retained command output")
+	}
+	m.stage, m.installStatus = stageResult, 0
+	if !strings.Contains(m.View(), "Installation complete") {
+		t.Fatal("successful result view is missing")
+	}
+}
+
+func TestInstallChildKeepsInteractiveTerminal(t *testing.T) {
+	script := filepath.Join(t.TempDir(), "setup.sh")
+	data := "#!/usr/bin/env bash\nprintf 'Password: '\nread -r answer\nprintf 'received %s\\n' \"$answer\"\n"
+	if err := os.WriteFile(script, []byte(data), 0700); err != nil {
+		t.Fatal(err)
+	}
+	m := newModel("..", "arch", "Arch Linux", filepath.Join(t.TempDir(), "selection"), "server")
+	m.executeScript = script
+	started, ok := m.startInstall()().(installStartedMsg)
+	if !ok {
+		t.Fatal("installer child did not start")
+	}
+	if _, err := started.terminal.Write([]byte("secret\r")); err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.After(3 * time.Second)
+	found, done := false, false
+	for !done {
+		select {
+		case event := <-started.events:
+			switch event := event.(type) {
+			case installLineMsg:
+				found = found || strings.Contains(string(event), "received secret")
+			case installDoneMsg:
+				if event.err != nil {
+					t.Fatal(event.err)
+				}
+				done = true
+			}
+		case <-deadline:
+			t.Fatal("interactive installer child timed out")
+		}
+	}
+	if !found {
+		t.Fatal("keyboard input did not reach the interactive installer child")
 	}
 }
 

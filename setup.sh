@@ -477,15 +477,17 @@ if [[ "$ASSUME_YES" == false && "$FULLSCREEN" == true ]]; then
   selection_file="$(mktemp "${TMPDIR:-/tmp}/linux-bootstrap-selection.XXXXXX")"
   tui_args=(--root "$ROOT_DIR" --family "$DISTRO_FAMILY" --pretty "$DISTRO_PRETTY" --default-profile "$PROFILE_HINT" --output "$selection_file")
   tui_args+=(--availability "$AVAILABILITY_FILE")
+  tui_args+=(--execute-script "$ROOT_DIR/setup.sh")
+  [[ "$DRY_RUN" == true ]] && tui_args+=(--child-dry-run)
   LAST_PLAN_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/linux-bootstrap/last-plan.conf"
   [[ -r "$LAST_PLAN_FILE" ]] && tui_args+=(--last-plan "$LAST_PLAN_FILE")
   [[ "$CONFIGURE_ONLY" == true ]] && tui_args+=(--configure-only)
   if "$TUI_BIN" "${tui_args[@]}"; then
     save_selection_plan "$selection_file" "$LAST_PLAN_FILE"
     [[ -z "$SAVE_PLAN" ]] || save_selection_plan "$selection_file" "$SAVE_PLAN"
-    load_selection_file "$selection_file"
     rm -f "$selection_file"
-    execute_loaded_selection
+    BOOTSTRAP_FINISHED=true
+    cleanup_temp_artifacts
     exit 0
   else
     tui_status=$?

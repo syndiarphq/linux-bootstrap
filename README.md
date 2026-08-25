@@ -40,11 +40,13 @@ with the command above. Gum is not needed.
 
 - Detects the distro and suggests desktop or headless based on the system
 - Lets you choose packages individually, sorted into useful submenus
+- Uses a three-pane layout when there is room and folds down cleanly over SSH
 - Dims anything already installed so it cannot be selected twice
 - Handles extra applications from GitHub, Cargo, Go, and upstream releases
 - Offers Docker, Tailscale, and SSH as separate options
 - Checks internet, sudo, disk space, architecture, and dependencies first
 - Disables choices whose packages or dependencies are not available
+- Keeps installation progress in the TUI; press `F2` for the raw output
 - Finishes with installed, already present, skipped, and failed lists
 
 Supported systems are Arch/CachyOS, Debian/Ubuntu, Fedora, and openSUSE, with
@@ -99,8 +101,8 @@ shell. User binaries normally go in `~/.local/bin`.
 
 The configuration menu can set Fish as the login shell, initialize Starship,
 apply a Starship preset, install my Micro setup, and open login or connection
-flows for GitHub, Spotify Player, and Tailscale. Anything interactive closes the
-installer view, runs normally, and then returns to it.
+flows for GitHub, Spotify Player, and Tailscale. Passwords and interactive setup
+still work normally inside the progress view.
 
 The Micro setup keeps regular editor-style controls and adds LSP, fuzzy search,
 a file tree, snippets, format-on-save, indent detection, symbol jumping, a

@@ -18,6 +18,8 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
+	"github.com/creack/pty"
 )
 
 type stage int
@@ -32,6 +34,8 @@ const (
 	stageServices
 	stageConfigurations
 	stageReview
+	stageInstall
+	stageResult
 )
 
 type item struct {
@@ -70,20 +74,43 @@ type model struct {
 	search                       textinput.Model
 	confirmed, cancelled         bool
 	err                          error
+	executeScript                string
+	childDryRun                  bool
+	installPTY                   *os.File
+	installEvents                chan tea.Msg
+	installLines                 []string
+	installStatus                int
+	showRaw                      bool
+}
+
+type installLineMsg string
+type installDoneMsg struct{ err error }
+type installStartedMsg struct {
+	terminal *os.File
+	events   chan tea.Msg
 }
 
 var (
-	cyan      = lipgloss.Color("#25d7d9")
-	dim       = lipgloss.Color("#65737e")
-	white     = lipgloss.Color("#e6e6e6")
+	cyan      = lipgloss.Color("#32d6d9")
+	dim       = lipgloss.Color("#697386")
+	white     = lipgloss.Color("#e5e9f0")
+	panel     = lipgloss.Color("#3b4353")
+	selection = lipgloss.Color("#26363d")
+	green     = lipgloss.Color("#7bd88f")
+	yellow    = lipgloss.Color("#e5c07b")
+	red       = lipgloss.Color("#e06c75")
 	cyanStyle = lipgloss.NewStyle().Foreground(cyan)
 	muted     = lipgloss.NewStyle().Foreground(dim)
 	active    = lipgloss.NewStyle().Foreground(cyan).Bold(true)
+	success   = lipgloss.NewStyle().Foreground(green)
+	warning   = lipgloss.NewStyle().Foreground(yellow)
+	danger    = lipgloss.NewStyle().Foreground(red)
 )
 
 func main() {
-	var root, family, pretty, output, defaultProfile, lastPlan, availability string
+	var root, family, pretty, output, defaultProfile, lastPlan, availability, executeScript string
 	var configureOnly bool
+	var childDryRun bool
 	flag.StringVar(&root, "root", ".", "repository root")
 	flag.StringVar(&family, "family", "", "arch or debian")
 	flag.StringVar(&pretty, "pretty", "Linux", "distribution display name")
@@ -92,6 +119,8 @@ func main() {
 	flag.StringVar(&lastPlan, "last-plan", "", "previous validated selection plan")
 	flag.StringVar(&availability, "availability", "", "package and dependency availability report")
 	flag.BoolVar(&configureOnly, "configure-only", false, "select configuration tasks without package installation")
+	flag.StringVar(&executeScript, "execute-script", "", "run this setup script after selection")
+	flag.BoolVar(&childDryRun, "child-dry-run", false, "pass --dry-run to the setup child")
 	flag.Parse()
 	if output == "" || (family != "arch" && family != "debian" && family != "fedora" && family != "suse") {
 		fmt.Fprintln(os.Stderr, "missing --output or unsupported --family")
@@ -114,6 +143,8 @@ func main() {
 		}
 	}
 	m.configureOnly = configureOnly
+	m.executeScript = executeScript
+	m.childDryRun = childDryRun
 	m.loadInstalledPackages()
 	if configureOnly {
 		m.loadConfigurations()
@@ -130,6 +161,15 @@ func main() {
 	if final.err != nil {
 		fmt.Fprintln(os.Stderr, final.err)
 		os.Exit(1)
+	}
+	if executeScript != "" {
+		if final.cancelled || final.stage != stageResult {
+			os.Exit(130)
+		}
+		if final.installStatus != 0 {
+			os.Exit(1)
+		}
+		return
 	}
 	if final.cancelled || !final.confirmed {
 		os.Exit(130)
@@ -173,14 +213,95 @@ func newModel(root, family, pretty, output, defaultProfile string) model {
 
 func (m model) Init() tea.Cmd { return textinput.Blink }
 
+func (m model) startInstall() tea.Cmd {
+	return func() tea.Msg {
+		args := []string{m.executeScript, "--plan", m.output}
+		if m.childDryRun {
+			args = append(args, "--dry-run")
+		}
+		command := exec.Command("bash", args...)
+		terminal, err := pty.Start(command)
+		if err != nil {
+			return installDoneMsg{err: err}
+		}
+		_ = pty.Setsize(terminal, &pty.Winsize{Rows: uint16(max(24, m.height)), Cols: uint16(max(80, m.width))})
+		events := make(chan tea.Msg, 64)
+		go func() {
+			scanner := bufio.NewScanner(terminal)
+			scanner.Buffer(make([]byte, 4096), 1024*1024)
+			for scanner.Scan() {
+				events <- installLineMsg(scanner.Text())
+			}
+			err := command.Wait()
+			_ = terminal.Close()
+			events <- installDoneMsg{err: err}
+		}()
+		return installStartedMsg{terminal: terminal, events: events}
+	}
+}
+
+func (m model) waitInstallEvent() tea.Cmd {
+	return func() tea.Msg {
+		if m.installEvents == nil {
+			return installDoneMsg{err: fmt.Errorf("installation event stream unavailable")}
+		}
+		return <-m.installEvents
+	}
+}
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
 		m.search.Width = max(20, msg.Width-34)
 		return m, nil
+	case installStartedMsg:
+		m.installPTY = msg.terminal
+		m.installEvents = msg.events
+		return m, m.waitInstallEvent()
+	case installLineMsg:
+		line := strings.TrimSpace(ansi.Strip(string(msg)))
+		if line != "" {
+			m.installLines = append(m.installLines, line)
+			if strings.Contains(strings.ToLower(line), "password") || strings.Contains(strings.ToLower(line), "authenticate") {
+				m.showRaw = true
+			}
+			if len(m.installLines) > 500 {
+				m.installLines = m.installLines[len(m.installLines)-500:]
+			}
+		}
+		return m, m.waitInstallEvent()
+	case installDoneMsg:
+		m.installStatus = 0
+		if msg.err != nil {
+			m.installStatus = 1
+		}
+		m.stage = stageResult
+		return m, nil
 	case tea.KeyMsg:
 		key := msg.String()
+		if m.stage == stageInstall {
+			if key == "f2" {
+				m.showRaw = !m.showRaw
+				return m, nil
+			}
+			if m.installPTY != nil {
+				_, _ = m.installPTY.Write(keyBytes(msg))
+			}
+			return m, nil
+		}
+		if m.stage == stageResult {
+			if key == "f2" {
+				m.showRaw = !m.showRaw
+				return m, nil
+			}
+			if key == "enter" || key == "q" || key == "esc" {
+				m.confirmed = m.installStatus == 0
+				m.cancelled = m.installStatus != 0
+				return m, tea.Quit
+			}
+			return m, nil
+		}
 		if key == "ctrl+c" || key == "q" && m.stage != stagePackages {
 			m.cancelled = true
 			return m, tea.Quit
@@ -228,6 +349,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 			m.next()
+			if m.stage == stageInstall {
+				return m, m.startInstall()
+			}
 			if m.confirmed || m.cancelled {
 				return m, tea.Quit
 			}
@@ -245,6 +369,33 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func keyBytes(msg tea.KeyMsg) []byte {
+	if len(msg.Runes) > 0 {
+		return []byte(string(msg.Runes))
+	}
+	switch msg.String() {
+	case "enter":
+		return []byte{'\r'}
+	case "tab":
+		return []byte{'\t'}
+	case "backspace":
+		return []byte{0x7f}
+	case "ctrl+c":
+		return []byte{0x03}
+	case "up":
+		return []byte("\x1b[A")
+	case "down":
+		return []byte("\x1b[B")
+	case "right":
+		return []byte("\x1b[C")
+	case "left":
+		return []byte("\x1b[D")
+	case "esc":
+		return []byte{0x1b}
+	}
+	return nil
+}
+
 func (m *model) next() {
 	switch m.stage {
 	case stageSplash:
@@ -255,7 +406,16 @@ func (m *model) next() {
 				m.cursor = 0
 				return
 			}
-			m.confirmed = true
+			if m.executeScript == "" {
+				m.confirmed = true
+			} else {
+				if err := m.writeSelection(); err != nil {
+					m.err = err
+					return
+				}
+				m.stage = stageInstall
+				m.installLines = []string{"Preparing installation…"}
+			}
 			return
 		}
 		exitIndex := 1
@@ -333,7 +493,16 @@ func (m *model) next() {
 	case stageConfigurations:
 		m.stage = stageReview
 	case stageReview:
-		m.confirmed = true
+		if m.executeScript == "" {
+			m.confirmed = true
+		} else {
+			if err := m.writeSelection(); err != nil {
+				m.err = err
+				return
+			}
+			m.stage = stageInstall
+			m.installLines = []string{"Preparing installation…"}
+		}
 	}
 	m.cursor = 0
 }
@@ -1016,13 +1185,26 @@ func (m model) View() string {
 	if m.stage == stageSplash {
 		return m.renderSplash(w, h)
 	}
+	if m.stage == stageInstall || m.stage == stageResult {
+		return m.renderInstall(w, h)
+	}
 	sideW := min(34, max(28, w/4))
-	mainW := max(46, w-sideW-3)
 	contentH := max(12, h-5)
 	sidebar := m.renderSidebar(sideW, contentH)
-	content := m.renderContent(mainW, contentH)
-	body := lipgloss.JoinHorizontal(lipgloss.Top, sidebar, " ", content)
-	footer := m.renderFooter(w - 2)
+	showDetails := w >= 118 && m.stage != stageReview
+	mainW := max(46, w-sideW-1)
+	if showDetails {
+		detailW := min(40, max(30, w/3))
+		mainW = max(46, w-sideW-detailW-1)
+		content := m.renderContent(mainW, contentH, true)
+		details := m.renderDetails(detailW, contentH)
+		body := lipgloss.JoinHorizontal(lipgloss.Top, sidebar, content, details)
+		footer := m.renderFooter(w)
+		return body + "\n" + footer
+	}
+	content := m.renderContent(mainW, contentH, false)
+	body := lipgloss.JoinHorizontal(lipgloss.Top, sidebar, content)
+	footer := m.renderFooter(w)
 	return body + "\n" + footer
 }
 
@@ -1057,11 +1239,46 @@ func (m model) renderSplash(width, height int) string {
 		muted.Render("Detected: "+m.pretty) + "\n" +
 		muted.Render("Suggested profile: "+m.profile) + "\n"
 	if m.splashNotice != "" {
-		card += "\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("#ffb86c")).Render(m.splashNotice) + "\n"
+		card += "\n" + warning.Render(m.splashNotice) + "\n"
 	}
 	card += "\n\n" + muted.Render("Choose an action") + "\n\n" +
 		actions + "\n\n\n" + muted.Render("↑/↓ move    enter select    esc exit")
 	return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, card)
+}
+
+func (m model) renderInstall(width, height int) string {
+	title := active.Render("Linux Bootstrap")
+	state := cyanStyle.Render("● Installation in progress")
+	footer := muted.Render("F2 raw output   Type normally when an installer asks a question")
+	if m.stage == stageResult {
+		if m.installStatus == 0 {
+			state = success.Bold(true).Render("✓ Installation complete")
+		} else {
+			state = danger.Bold(true).Render("× Installation finished with failures")
+		}
+		footer = muted.Render("F2 raw output   Enter close")
+	}
+	availableRows := max(5, height-12)
+	var body string
+	if m.showRaw {
+		start := max(0, len(m.installLines)-availableRows)
+		body = muted.Render("Raw output") + "\n\n" + strings.Join(m.installLines[start:], "\n")
+	} else {
+		latest := "Preparing installation…"
+		if len(m.installLines) > 0 {
+			latest = m.installLines[len(m.installLines)-1]
+		}
+		body = muted.Render("Current activity") + "\n\n" +
+			lipgloss.NewStyle().Foreground(white).Width(max(40, width-12)).Render(latest) +
+			"\n\n\n" + muted.Render("Normal command output is still being saved to the bootstrap log.")
+	}
+	panelBody := title + "\n\n" + state + "\n\n\n" + body
+	panel := lipgloss.NewStyle().
+		Width(max(60, width-8)).Height(max(14, height-5)).
+		Border(lipgloss.RoundedBorder()).BorderForeground(cyan).
+		Padding(1, 2).
+		Render(panelBody)
+	return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, panel+"\n"+footer)
 }
 
 func (m model) renderSidebar(width, height int) string {
@@ -1082,7 +1299,7 @@ func (m model) renderSidebar(width, height int) string {
 		if m.version != "" {
 			info += "\n" + muted.Render("version: "+m.version)
 		}
-		return lipgloss.NewStyle().Width(width).Height(height).Border(lipgloss.NormalBorder()).BorderForeground(cyan).Padding(1).Render(title + lines + info)
+		return m.sidebarFrame(width, height).Render(title + lines + info)
 	}
 	names := []string{"Preflight", "Profile", "Packages", "External applications", "Services", "Configure applications", "Review & install"}
 	lines := ""
@@ -1123,10 +1340,20 @@ func (m model) renderSidebar(width, height int) string {
 	if m.version != "" {
 		info += "\n" + muted.Render("version: "+m.version)
 	}
-	return lipgloss.NewStyle().Width(width).Height(height).Border(lipgloss.NormalBorder()).BorderForeground(cyan).Padding(1).Render(title + lines + info)
+	return m.sidebarFrame(width, height).Render(title + lines + info)
 }
 
-func (m model) renderContent(width, height int) string {
+func (m model) sidebarFrame(width, height int) lipgloss.Style {
+	return lipgloss.NewStyle().
+		Width(width).Height(height).
+		Border(lipgloss.NormalBorder()).
+		BorderForeground(panel).
+		BorderRight(false).
+		BorderBottom(false).
+		Padding(1)
+}
+
+func (m model) renderContent(width, height int, sharedRight bool) string {
 	var title, body string
 	switch m.stage {
 	case stagePreflight:
@@ -1134,7 +1361,7 @@ func (m model) renderContent(width, height int) string {
 		body = muted.Render("Package manager, privilege, and disk checks are required. Network and build-tool checks are advisory.") + "\n\n"
 		body += m.renderItems(m.preflight, height-8)
 		if m.preflightBlock != "" {
-			body += "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("#ff6b6b")).Bold(true).Render(m.preflightBlock)
+			body += "\n\n" + danger.Bold(true).Render(m.preflightBlock)
 		}
 	case stageProfile:
 		title, body = "02 · Profile", m.renderItems(m.profiles, height-5)
@@ -1169,7 +1396,78 @@ func (m model) renderContent(width, height int) string {
 		}
 	}
 	header := active.Render(title)
-	return lipgloss.NewStyle().Width(width).Height(height).Border(lipgloss.NormalBorder()).BorderForeground(cyan).Padding(1).Render(header + "\n\n" + body)
+	frame := lipgloss.NewStyle().
+		Width(width).Height(height).
+		Border(lipgloss.NormalBorder()).
+		BorderForeground(cyan).
+		BorderBottom(false).
+		Padding(1)
+	if sharedRight {
+		frame = frame.BorderRight(false)
+	}
+	return frame.Render(header + "\n\n" + body)
+}
+
+func (m model) renderDetails(width, height int) string {
+	selected, ok := m.currentItem()
+	title := active.Render("Details")
+	body := muted.Render("Move through the list to inspect an option.")
+	if ok {
+		body = lipgloss.NewStyle().Foreground(white).Bold(true).Render(selected.name)
+		if selected.description != "" {
+			body += "\n\n" + lipgloss.NewStyle().Foreground(dim).Width(max(20, width-4)).Render(selected.description)
+		}
+		body += "\n\n" + muted.Render("Status") + "\n" + m.itemStatus(selected)
+		if selected.category != "" && selected.category != "__continue" {
+			body += "\n\n" + muted.Render("Category") + "\n" + cyanStyle.Render(m.categoryLabel(selected.category))
+		}
+	}
+	return lipgloss.NewStyle().
+		Width(width).Height(height).
+		Border(lipgloss.NormalBorder()).
+		BorderForeground(panel).
+		BorderBottom(false).
+		Padding(1).
+		Render(title + "\n\n" + body)
+}
+
+func (m model) currentItem() (item, bool) {
+	var items []item
+	switch m.stage {
+	case stagePreflight:
+		items = m.preflight
+	case stageProfile:
+		items = m.profiles
+	case stageCategories:
+		items = m.categoryItems()
+	case stagePackages:
+		items = m.visiblePackages()
+	case stageExternal:
+		items = m.externalItems()
+	case stageServices:
+		items = m.services
+	case stageConfigurations:
+		items = m.configurations
+	}
+	if m.cursor < 0 || m.cursor >= len(items) {
+		return item{}, false
+	}
+	return items[m.cursor], true
+}
+
+func (m model) itemStatus(selected item) string {
+	switch {
+	case selected.installed:
+		return success.Render("Already installed")
+	case selected.unavailable:
+		return danger.Render("Unavailable")
+	case selected.selected:
+		return success.Render("Selected")
+	case selected.category == "__continue":
+		return cyanStyle.Render("Continue")
+	default:
+		return muted.Render("Not selected")
+	}
 }
 
 func (m model) renderItems(items []item, maxRows int) string {
@@ -1197,17 +1495,19 @@ func (m model) renderItems(items []item, maxRows int) string {
 		cursor := "  "
 		style := lipgloss.NewStyle().Foreground(white)
 		if i == m.cursor {
-			cursor = "# "
+			cursor = "› "
 			if disabled {
-				style = muted
+				style = muted.Background(selection)
 			} else {
-				style = active
+				style = active.Background(selection)
 			}
 		} else if disabled {
 			style = muted
+		} else if items[i].selected {
+			style = success
 		}
 		line := fmt.Sprintf("%s[%s] %s", cursor, box, items[i].name)
-		if items[i].description != "" {
+		if items[i].description != "" && m.width < 118 {
 			line += muted.Render(" — " + items[i].description)
 		}
 		if items[i].installed {
@@ -1235,11 +1535,31 @@ func (m model) renderReview() string {
 }
 
 func (m model) renderFooter(width int) string {
-	help := "↑/↓ move   Space toggle   Enter open/next   Esc back   Ctrl+C quit"
-	if m.stage == stagePackages {
-		help = "↑/↓ move   Space toggle   Ctrl+A category   / search   Enter next category   Esc category menu"
+	help := map[stage]string{
+		stagePreflight:      "↑/↓ inspect   Enter continue   Esc welcome",
+		stageProfile:        "↑/↓ choose   Enter select   Esc back",
+		stageCategories:     "↑/↓ move   Space all/none   Enter open   Esc back",
+		stagePackages:       "↑/↓ move   Space toggle   Ctrl+A all/none   / search   Enter next   Esc categories",
+		stageExternal:       "↑/↓ move   Space toggle   Enter continue   Esc packages",
+		stageServices:       "↑/↓ move   Space toggle   Enter continue   Esc external apps",
+		stageConfigurations: "↑/↓ move   Space toggle   Enter continue   Esc services",
+		stageReview:         "Enter install   Esc change selections",
+	}[m.stage]
+	if m.configureOnly {
+		if m.stage == stageConfigurations {
+			help = "↑/↓ move   Space toggle   Enter review   Esc welcome"
+		} else if m.stage == stageReview {
+			help = "Enter apply   Esc change selections"
+		}
 	}
-	return lipgloss.NewStyle().Width(width).Border(lipgloss.NormalBorder()).BorderForeground(dim).Foreground(cyan).Padding(0, 1).Render(help)
+	help += "   Ctrl+C quit"
+	return lipgloss.NewStyle().
+		Width(width).
+		Border(lipgloss.NormalBorder()).
+		BorderForeground(panel).
+		Foreground(dim).
+		Padding(0, 1).
+		Render(help)
 }
 
 func (m model) categoryLabel(slug string) string {
